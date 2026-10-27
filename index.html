@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sanae concept</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600&family=Inter:wght@400;600&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><img src="logo.svg" alt="Sanae concept"><button class="btn alt sm" id="lang">العربية</button></header>
+<div class="hero"><h1 data-t="title"></h1><p data-t="sub"></p><a class="btn" href="#shop" data-t="cta"></a></div>
+<main id="shop">
+  <div class="tools"><input id="q" type="search"><select id="cat"></select></div>
+  <div class="grid" id="grid"></div>
+</main>
+<section class="about"><h2 data-t="aboutT"></h2><p data-t="aboutP"></p><br><a class="btn wa" id="wa" target="_blank" rel="noopener" data-t="contact"></a></section>
+<footer>© <span id="y"></span> Sanae concept</footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script><script src="common.js"></script>
+<script>
+const T={
+fr:{title:"Sanae concept",sub:"Des articles d'occasion en bon état, à petits prix. Livraison au Maroc.",cta:"Voir les articles",search:"Rechercher...",all:"Toutes les catégories",aboutT:"À propos",aboutP:"Chaque article est soigneusement choisi et en bon état. Pour acheter, contactez-nous directement sur WhatsApp.",contact:"Nous contacter sur WhatsApp",buy:"Commander sur WhatsApp",sold:"Vendu",none:"Aucun article pour le moment.",msg:"Bonjour, je suis intéressé(e) par : ",other:"العربية"},
+ar:{title:"Sanae concept",sub:"منتجات مستعملة بحالة جيدة وبأثمنة مناسبة. التوصيل داخل المغرب.",cta:"شاهد المنتجات",search:"ابحث...",all:"كل الأصناف",aboutT:"من نحن",aboutP:"كل منتج مختار بعناية وبحالة جيدة. للشراء تواصل معنا مباشرة عبر واتساب.",contact:"تواصل معنا عبر واتساب",buy:"اطلب عبر واتساب",sold:"تم البيع",none:"لا توجد منتجات حاليا.",msg:"السلام عليكم، أنا مهتم/ة بـ: ",other:"Français"}};
+let lang=localStorage.getItem("lang")||"fr",items=[];
+const wa=t=>`https://wa.me/${CONFIG.WHATSAPP}?text=${encodeURIComponent(t||"")}`;
+function ui(){
+  document.documentElement.lang=lang;document.documentElement.dir=lang==="ar"?"rtl":"ltr";
+  document.querySelectorAll("[data-t]").forEach(e=>e.textContent=T[lang][e.dataset.t]);
+  q.placeholder=T[lang].search;lang_.textContent=T[lang].other;
+  const cur=cat.value;cat.innerHTML=`<option value="">${T[lang].all}</option>`+Object.entries(CATS).map(([k,v])=>`<option value="${k}">${v[lang]}</option>`).join("");cat.value=cur;
+  document.getElementById("wa").href=wa("");render();
+}
+function render(){
+  const s=q.value.toLowerCase(),c=cat.value;
+  const list=items.filter(p=>(!c||p.category===c)&&(!s||(p.name+" "+(p.description||"")).toLowerCase().includes(s)));
+  grid.innerHTML=list.length?list.map(p=>`<div class="card">${p.sold?`<span class="badge">${T[lang].sold}</span>`:""}<img src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="lazy"><div class="in"><span class="cat">${esc((CATS[p.category]||CATS.other)[lang])}</span><h3>${esc(p.name)}</h3><div class="desc">${esc(p.description)}</div><div class="price">${esc(p.price)} DH</div>${p.sold?`<button class="btn" disabled>${T[lang].sold}</button>`:`<a class="btn wa" target="_blank" rel="noopener" href="${wa(T[lang].msg+p.name+" ("+p.price+" DH)")}">${T[lang].buy}</a>`}</div></div>`).join(""):`<p class="empty">${T[lang].none}</p>`;
+}
+const lang_=document.getElementById("lang"),q=document.getElementById("q"),cat=document.getElementById("cat"),grid=document.getElementById("grid");
+lang_.onclick=()=>{lang=lang==="fr"?"ar":"fr";localStorage.setItem("lang",lang);ui()};
+q.oninput=render;cat.onchange=render;document.getElementById("y").textContent=new Date().getFullYear();
+(async()=>{ui();const {data}=await sb.from("products").select("*").order("created_at",{ascending:false});items=data||[];render()})();
+</script>
+</body></html>
